@@ -1,0 +1,9 @@
+.idea
+config.txt
+test
+tmp_imgs
+test
+__pycache__
+build
+dist
+*.spec
