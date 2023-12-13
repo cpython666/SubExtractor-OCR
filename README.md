@@ -14,6 +14,13 @@ SubExtractor-OCR 是一款基于 OCR（Optical Character Recognition 光学字�
 - **用户友好的界面**: 基于 PyQT6 构建，提供直观、易用的用户界面。
 
 - **支持自定义高度区间**：设置字幕高度区间，提高适应性。
+## 如何安装
+
+### 下载安装包：
+
+就是项目中的rar文件，解压即可使用。
+
+下载链接：[https://github.com/w-x-x-w/SubExtractor-OCR/releases](https://github.com/w-x-x-w/SubExtractor-OCR/releases)
 
 ## 注意事项
 
