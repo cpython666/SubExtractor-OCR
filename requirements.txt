@@ -1,0 +1,5 @@
+PyQt6==6.6.0
+opencv-python==4.7.0.72
+qt_material==2.14
+numpy==1.25.1
+wechat_ocr==0.0.3
