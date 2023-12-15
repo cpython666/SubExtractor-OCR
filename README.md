@@ -66,6 +66,8 @@ SubExtractor-OCR 是一款基于 OCR（Optical Character Recognition 光学字�
 
 `pyinstaller -w 视频字幕提取-OCR版-1.0.py -i ./logo.png`
 
+`pyinstaller -w 视频字幕提取-OCR版-2.0.py -i ./logo.png`
+
 ## 贡献
 
 如果您发现任何问题或有改进建议，请提出 issue 或创建 pull 请求。我们欢迎您的贡献！
