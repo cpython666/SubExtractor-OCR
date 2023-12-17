@@ -86,7 +86,7 @@ class WorkerThread(QThread):
                     cv2.imencode(".png", new_frame)[1].tofile(image_save_path)
                     self.progress_zimu_signal.emit(frame_count // frame_interval,total_frames // frame_interval)
                     # break
-                    # # TODO
+                    # TODO
                 frame_count += 1
 
         cap.release()
@@ -96,13 +96,16 @@ class WorkerThread(QThread):
         zimu_width = self.image_width
         print(file)
         if data:
-            # print(data)
             ocrResult = data['ocrResult']
+            ocrResult=[i for i in ocrResult if i['location']['right'] and i['location']['left']]
+            # ocrResult=[i for i in ocrResult if i['location']['right'] and i['location']['left'] and i['location']['top'] and i['location']['bottom']]
             if ocrResult:
+                # 方案一：最宽字幕区间
+                ocrResult.sort(key=lambda x: -1 * (x['location']['right'] - x['location']['left']))
+                # 方案二：最高字幕区间
                 # ocrResult.sort(key=lambda x: (x['location']['top'] - x['location']['bottom']))
-                # ocrResult.sort(key=lambda x: -1 * (x['location']['right'] - x['location']['left']))
-                ocrResult=[i for i in ocrResult if i['location']['right'] and i['location']['left'] and i['location']['top'] and i['location']['bottom']]
-                ocrResult.sort(key=lambda x: -1 * (x['location']['right'] - x['location']['left'])*(x['location']['bottom'] - x['location']['top']))
+                # 方案三：最大面积
+                # ocrResult.sort(key=lambda x: -1 * (x['location']['right'] - x['location']['left'])*(x['location']['bottom'] - x['location']['top']))
                 center = ocrResult[0]['location']['left'] + ocrResult[0]['location']['right']
                 if abs(center - zimu_width) < 100:
                     print(ocrResult[0]['text'])
