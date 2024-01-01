@@ -269,7 +269,6 @@ class VideoProcessingApp(QMainWindow):
             if self.delete_json_checkbox.isChecked():
                 self.delete_folder(self.path_output_)
 
-
     def delete_folder(self,folder_path):
         try:
             # 列出文件夹中的所有文件和子文件夹
@@ -412,10 +411,13 @@ class VideoProcessingApp(QMainWindow):
             ocrResult = data['ocrResult']
             if ocrResult:
                 ocrResult.sort(key=lambda x: -1 * (x['location']['right'] - x['location']['left']))
-                center = ocrResult[0]['location']['left'] + ocrResult[0]['location']['right']
-                if abs(center - zimu_width) < 100:
-                    print(ocrResult[0]['text'])
-                    return ocrResult[0]['text']
+                res = ''
+                for ocrresult in ocrResult[:3]:
+                    center = ocrresult['location']['left'] + ocrresult['location']['right']
+                    if abs(center - zimu_width) < 100:
+                        print(ocrresult['text'])
+                        res+=ocrresult['text']
+                return res
         else:
             return False
 
