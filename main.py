@@ -94,6 +94,7 @@ class SubtitleExtractor(QThread):
             self.message_signal.emit(f"截取字幕高度区间: {crop_height_min} - {frame.shape[0]}")
         cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # 重置到第一帧
 
+        skipped_count = 0
         while True:
             ret, frame = cap.read()
             if not ret:
@@ -101,11 +102,19 @@ class SubtitleExtractor(QThread):
             if frame_count % frame_interval == 0:
                 image_filename = f"frame_{frame_count:0{padding_length}d}.png"
                 image_path = os.path.join(self.subtitle_dir, image_filename)
-                cropped_frame = self.crop_subtitle_area(frame)
-                cv2.imencode(".png", cropped_frame)[1].tofile(image_path)
+
+                if os.path.exists(image_path):
+                    skipped_count += 1
+                else:
+                    cropped_frame = self.crop_subtitle_area(frame)
+                    cv2.imencode(".png", cropped_frame)[1].tofile(image_path)
+
                 extracted_count += 1
                 self.progress_extract_signal.emit(extracted_count, total_extracted)
             frame_count += 1
+        
+        if skipped_count > 0:
+            self.message_signal.emit(f"检测到已存在帧文件，已跳过 {skipped_count} 张图片")
         cap.release()
 
     def crop_subtitle_area(self, frame):
@@ -120,7 +129,14 @@ class SubtitleExtractor(QThread):
         total = len(image_files)
         api_url = UMI_OCR_URL
 
+        skipped_count = 0
         for idx, image_name in enumerate(image_files):
+            result_file = os.path.join(self.ocr_result_dir, f"{image_name}.json")
+            if os.path.exists(result_file):
+                skipped_count += 1
+                self.progress_ocr_signal.emit(idx + 1, total)
+                continue
+
             image_path = os.path.join(self.subtitle_dir, image_name)
             with open(image_path, 'rb') as img_file:
                 img_base64 = base64.b64encode(img_file.read()).decode('utf-8')
@@ -159,6 +175,9 @@ class SubtitleExtractor(QThread):
                     else:
                         self.message_signal.emit(f"OCR处理出错: {str(e)}，重试 {retries} 次后仍失败")
             self.progress_ocr_signal.emit(idx + 1, total)
+
+        if skipped_count > 0:
+            self.message_signal.emit(f"检测到已存在OCR结果，已跳过 {skipped_count} 张图片")
 
     def parse_ocr_result(self, result):
         """解析UMI-OCR的返回结果，提取面积最大的一句话"""
