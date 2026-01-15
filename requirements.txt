@@ -3,3 +3,4 @@ opencv-python==4.7.0.72
 qt_material==2.14
 numpy==1.25.1
 python-dotenv==1.0.1
+opencc

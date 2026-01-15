@@ -7,11 +7,12 @@ import cv2
 import math
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                                QPushButton, QLabel, QFileDialog, QListWidget, QHBoxLayout,
-                               QLineEdit, QTextEdit, QProgressBar, QMessageBox)
+                               QLineEdit, QTextEdit, QProgressBar, QMessageBox, QCheckBox)
 from PySide6.QtGui import QIcon, QGuiApplication, QDesktopServices
 from PySide6.QtCore import QUrl, Qt, QThread, Signal
 from qt_material import apply_stylesheet
 from dotenv import load_dotenv
+from opencc import OpenCC
 
 load_dotenv()
 UMI_OCR_URL = os.getenv("UMI_OCR_URL", 'http://127.0.0.1:1224/api/ocr')
@@ -28,11 +29,14 @@ class SubtitleExtractor(QThread):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.frames_per_second = 1  # 默认每秒抽取1帧，可通过UI配置
+        self.convert_t2s = False
+        self.cc = None
 
-    def set_video_paths(self, video_paths, frames_per_second=1):
+    def set_video_paths(self, video_paths, frames_per_second=1, convert_t2s=False):
         """设置视频路径和每秒抽取帧数"""
         self.video_paths = video_paths
         self.frames_per_second = frames_per_second
+        self.convert_t2s = convert_t2s
 
     def run(self):
         """线程运行主函数，依次处理每个视频"""
@@ -217,6 +221,11 @@ class SubtitleExtractor(QThread):
 
     def normalize_text(self, text):
         """归一化相近字符，例如将'—'替换为'-'"""
+        if self.convert_t2s:
+            if self.cc is None:
+                self.cc = OpenCC('t2s')
+            text = self.cc.convert(text)
+
         normalization_map = {'—': '-'}
         for src, dst in normalization_map.items():
             text = text.replace(src, dst)
@@ -349,6 +358,9 @@ class SubtitleApp(QMainWindow):
         self.fps_input = QLineEdit("1")
         layout.addWidget(self.fps_input)
 
+        self.t2s_checkbox = QCheckBox("繁体转简体")
+        layout.addWidget(self.t2s_checkbox)
+
         # 进度条
         self.progress_extract = QProgressBar(self)
         layout.addWidget(QLabel('字幕图片提取进度：'))
@@ -392,7 +404,8 @@ class SubtitleApp(QMainWindow):
             return
 
         self.extractor = SubtitleExtractor(self)
-        self.extractor.set_video_paths(self.selected_videos, fps)
+        convert_t2s = self.t2s_checkbox.isChecked()
+        self.extractor.set_video_paths(self.selected_videos, fps, convert_t2s)
         self.extractor.progress_extract_signal.connect(self.update_extract_progress)
         self.extractor.progress_ocr_signal.connect(self.update_ocr_progress)
         self.extractor.progress_combine_signal.connect(self.update_combine_progress)
